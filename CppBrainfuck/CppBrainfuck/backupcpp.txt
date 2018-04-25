@@ -1,0 +1,132 @@
+﻿// CppBrainfuck.cpp : Defines the entry point for the console application.
+//
+
+#include "stdafx.h"
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stack>
+#include <iostream>
+// initialize the tape with 30,000 zeroes
+unsigned char tape[30000] = { 0 };
+
+// set the pointer to point at the left-most cell of the tape
+unsigned char* ptr = tape;
+
+
+void interpret(const char* input) {
+	char current_char;
+	size_t i;
+	size_t loop;
+	std::stack<int> loopState;
+
+	for (i = 0; input[i] != 0; i++) {
+		current_char = input[i];
+		if (!loopState.empty() && loopState.top() < 0 && (current_char != ']' && current_char != '[') )
+		{
+			continue;
+		}
+		if (current_char == '>') {
+			++ptr;
+		}
+		else if (current_char == '<') {
+			--ptr;
+		}
+		else if (current_char == '+') {
+			++*ptr;
+		}
+		else if (current_char == '-') {
+			--*ptr;
+		}
+		else if (current_char == '.') {
+			//putchar(*ptr);
+			std::cout << *ptr;
+			std::cout.flush();
+		}
+		else if (current_char == ',') {
+			*ptr = getchar();
+		}
+		else if (current_char == '[') {
+			// loopState neigiamas bus skip to loop end, o teigiamas - loopo pradžios indexas
+			
+			if (!loopState.empty() && loopState.top() < 0) // jeigu jau yra skip to loop end, reiškia čia prasideda vidinis loopas, kurį irgi skipinam
+			{
+				loopState.push(-1);
+				continue;
+			}
+			if (*ptr) // jeigu duomenys, kur rodo pointeris nėra lygūs 0
+			{
+				loopState.push(i);
+				continue;
+			}
+			// skip to end loop
+			if (*ptr == 0)
+			{
+				loopState.push(-1);
+				continue;
+			}
+		}
+		else if(current_char == ']')
+		{
+			if (loopState.empty())
+			{
+				std::cout << "gaidys" << std::endl; // throwint kažkaip exceptioną
+			}
+			// skip to end loop
+			if (loopState.top() < 0)
+			{
+				loopState.pop();
+				continue;
+			}
+			if (loopState.top() >= 0)
+			{
+				if (*ptr)
+				{
+					i = loopState.top();
+					//i++; // ar reikia?
+					continue;
+				}
+				else
+				{
+					loopState.pop();
+					continue;
+				}
+			}
+		}
+		//else if (current_char == ']' && *ptr) 
+		//{
+		//	loop = 1;
+		//	while (loop > 0) 
+		//	{
+		//		current_char = input[--i];
+		//		if (current_char == '[') {
+		//			loop--;
+		//		}
+		//		else if (current_char == ']') {
+		//			loop++;
+		//		}
+		//	}
+		//}
+	}
+}
+
+#include <fstream>
+#include <streambuf>
+
+
+int main() 
+{
+	std::ifstream t("C:\\Users\\Matas\\source\\repos\\CppBrainfuck\\Debug\\file.txt");
+	std::string str;
+
+	t.seekg(0, std::ios::end);
+	str.reserve(t.tellg());
+	t.seekg(0, std::ios::beg);
+
+	str.assign((std::istreambuf_iterator<char>(t)),
+		std::istreambuf_iterator<char>());
+
+	interpret(str.c_str());  // outputs input
+	return 0;
+}
